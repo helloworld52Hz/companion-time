@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Companion Time · Character Partner</title>
+<style>
+:root {
+  --bg:#fef6f9;--bg2:#f0eef9;--card:rgba(255,255,255,0.90);
+  --pink:#e8a0bb;--pink-l:#fce8f2;--pink-d:#c25585;
+  --purple:#b59fd4;--purple-l:#ede8f8;--rose:#c25585;
+  --text:#2a1822;--text2:#6b4a5e;--text3:#a87f98;
+  --border:rgba(195,145,170,0.22);
+  --shadow:0 2px 8px rgba(0,0,0,0.04);
+  --shadow-m:0 4px 24px rgba(175,95,135,0.12);
+  --r:16px;--rsm:10px;--tr:all 0.15s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'SF Pro Text','Segoe UI',sans-serif;background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);min-height:100vh;color:var(--text);font-size:14px;line-height:1.65}
+
+/* LAYOUT */
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#topbar{height:50px;flex-shrink:0;background:rgba(255,255,255,0.78);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;z-index:100}
+.logo{font-size:17px;font-weight:800;color:var(--rose);letter-spacing:1px;white-space:nowrap}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{padding:4px 13px;border-radius:18px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit;transition:var(--tr);white-space:nowrap}
+.nav-tab:hover{background:var(--pink-l);color:var(--rose)}
+.nav-tab.act{background:var(--pink);color:#fff}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.tb-icon{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--tr)}
+.tb-icon:hover{background:var(--pink-l)}
+
+/* WORKSPACE */
+#ws{flex:1;display:grid;grid-template-columns:260px 1fr 240px;min-height:0;overflow:hidden}
+
+/* LEFT MINI SCHED + CENTER + PANELS */
+#left-sched{display:flex;flex-direction:column;border-right:1px solid var(--border);background:rgba(255,255,255,.42);overflow:hidden;min-width:0}
+#ct-main{display:flex;flex-direction:column;overflow:hidden;min-width:0;flex:1}
+#pChat{display:none;flex-direction:column;overflow:hidden;flex:1}
+#pSched{display:none;flex-direction:column;overflow:hidden;flex:1;background:rgba(255,255,255,.40)}
+#pLetter{display:none;flex:1;overflow-y:auto;padding:16px;flex-direction:column;align-items:center;gap:14px}
+
+/* SCHEDULE */
+.p-hdr{padding:10px 12px 6px;font-size:12px;font-weight:700;color:var(--text2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sched-scroll{flex:1;overflow-y:auto;padding:0 8px 10px}
+.wk-hd{display:grid;grid-template-columns:36px repeat(7,1fr);position:sticky;top:0;background:rgba(254,246,249,0.96);backdrop-filter:blur(4px);padding:4px 0 5px;z-index:5;gap:1px}
+.wday{text-align:center;font-size:10px;color:var(--text2);padding:3px 1px;border-radius:7px;font-weight:600;line-height:1.4}
+.wday.td{background:var(--pink);color:#fff}
+.tgrid{display:grid;grid-template-columns:36px repeat(7,1fr);gap:1px}
+.tlbl{font-size:9px;color:var(--text3);text-align:right;padding-right:3px;padding-top:3px}
+.gcell{height:32px;border:1px solid var(--border);border-radius:3px;cursor:pointer;overflow:hidden;background:rgba(255,255,255,0.42);transition:background 0.1s;position:relative}
+.gcell:hover{background:var(--pink-l)}
+.tblk{width:100%;height:100%;padding:2px 4px;font-size:9px;line-height:1.3;border-radius:2px;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer}
+.t-work{background:#cce0f5;color:#1a5898}.t-study{background:#c8ead0;color:#1a5e28}
+.t-social{background:#f8d3e4;color:#8f1a55}.t-fun{background:#fef0c0;color:#8a5a00}
+.t-misc{background:#e4e0ef;color:#483870}.t-sport{background:#c6ebe4;color:#0c4d44}
+
+/* CHAT */
+#mem-bar{display:none;align-items:center;gap:8px;background:linear-gradient(90deg,var(--purple-l),var(--pink-l));border-bottom:1px solid var(--border);padding:7px 14px;font-size:11px;color:var(--text2);flex-shrink:0;animation:slideD .2s ease}
+#mem-bar.show{display:flex}
+@keyframes slideD{from{transform:translateY(-6px);opacity:0}to{transform:none;opacity:1}}
+#chat-msgs{flex:1;overflow-y:auto;padding:12px 15px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:7px;max-width:84%;animation:msgIn .22s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.msg.u{align-self:flex-end;flex-direction:row-reverse}
+.msg.a{align-self:flex-start}
+.msg.s{align-self:center;max-width:92%}
+.mav{width:28px;height:28px;border-radius:50%;flex-shrink:0;object-fit:cover;border:2px solid var(--pink-l)}
+.mb{padding:8px 12px;border-radius:15px;font-size:13px;line-height:1.65;word-break:break-word}
+.msg.u .mb{background:var(--pink);color:#fff;border-bottom-right-radius:3px}
+.msg.a .mb{background:#fff;border:1px solid var(--border);border-bottom-left-radius:3px;box-shadow:var(--shadow)}
+.msg.s .mb{background:var(--purple-l);border:1px dashed var(--purple);border-radius:var(--rsm);font-size:12px;color:var(--text2);text-align:center;width:100%}
+.mt{font-size:10px;color:var(--text3);margin-top:2px}
+.msg.u .mt{text-align:right}
+.dots{display:flex;gap:3px;align-items:center;padding:3px 0}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--pink);animation:blink 1s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+#chat-inp-row{padding:9px 13px;border-top:1px solid var(--border);background:rgba(255,255,255,0.65);backdrop-filter:blur(8px);display:flex;gap:7px;align-items:flex-end;flex-shrink:0}
+#chat-inp{flex:1;min-height:34px;max-height:100px;resize:none;border-radius:17px;padding:7px 13px;font-size:13px;font-family:inherit;border:1.5px solid var(--border);background:#fff;outline:none;transition:border-color .15s;line-height:1.5}
+#chat-inp:focus{border-color:var(--pink)}
+#send-btn{width:34px;height:34px;border-radius:50%;background:var(--pink);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0}
+#send-btn:hover{background:var(--rose);transform:scale(1.06)}
+#send-btn svg{width:14px;height:14px;fill:#fff}
+
+/* SIDEBAR */
+#sidebar{display:flex;flex-direction:column;border-left:1px solid var(--border);background:rgba(255,255,255,0.42);backdrop-filter:blur(6px);overflow-y:auto}
+.sc{padding:11px 13px;border-bottom:1px solid var(--border)}
+.sc-ttl{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.7px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;gap:5px}
+.sc-ttl>span{display:flex;align-items:center;gap:4px}
+.av-blk{display:flex;flex-direction:column;align-items:center;gap:6px}
+#av-img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid var(--pink);box-shadow:0 0 0 4px var(--pink-l);cursor:pointer}
+.av-btns{display:flex;gap:4px}
+.av-btn{font-size:10px;padding:3px 8px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;transition:var(--tr)}
+.av-btn:hover{background:var(--pink-l);color:var(--rose)}
+#av-file{display:none}
+input[type=text],input[type=time],textarea,select{width:100%;border:1.5px solid var(--border);border-radius:var(--rsm);padding:5px 9px;font-size:12px;font-family:inherit;background:rgba(255,255,255,.88);color:var(--text);outline:none;transition:border-color .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--pink)}
+textarea{resize:vertical;min-height:48px}
+.fl{font-size:11px;color:var(--text2);margin-bottom:2px;display:block}
+.fr{margin-bottom:7px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:5px 13px;border-radius:18px;border:none;cursor:pointer;font-size:11px;font-family:inherit;font-weight:500;transition:var(--tr)}
+.btn-p{background:var(--pink);color:#fff}
+.btn-p:hover{background:var(--rose);transform:translateY(-1px)}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-g:hover{background:var(--pink-l);color:var(--rose)}
+.btn-w{width:100%}
+.li{display:flex;align-items:flex-start;gap:5px;padding:5px 7px;border-radius:7px;background:var(--pink-l);margin-top:4px;font-size:11px}
+.li .lc{flex:1;word-break:break-word;color:var(--text2)}
+.li .ld,.li .le{cursor:pointer;font-size:12px;color:var(--text3);flex-shrink:0;transition:color .15s}
+.li .ld:hover{color:var(--rose)}.li .le:hover{color:var(--purple)}
+.obs-li{padding:5px 8px;border-radius:7px;background:var(--purple-l);font-size:11px;color:var(--text2);margin-top:4px;font-style:italic;border-left:3px solid var(--purple);display:flex;gap:5px;align-items:flex-start}
+.obs-li .lc{flex:1}
+.tog{position:relative;display:inline-block;width:32px;height:17px}
+.tog input{display:none}
+.ts{position:absolute;inset:0;background:#ccc;border-radius:17px;cursor:pointer;transition:.2s}
+.ts::before{content:'';position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;left:3px;top:3px;transition:.2s}
+.tog input:checked+.ts{background:var(--pink)}
+.tog input:checked+.ts::before{transform:translateX(15px)}
+.stat-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);padding:2px 0}
+.stat-row .sk{color:var(--text3)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--pink);border-radius:3px}
+
+/* MODALS */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);backdrop-filter:blur(5px);z-index:500;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--r);padding:20px;width:370px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(160,90,130,.18);border:1px solid var(--border);animation:mIn .2s ease}
+.modal-w{width:500px}
+@keyframes mIn{from{opacity:0;transform:scale(.94) translateY(9px)}to{opacity:1;transform:none}}
+.modal h3{font-size:14px;color:var(--text);margin-bottom:13px}
+.m-act{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);gap:7px}
+.srow:last-child{border-bottom:none}
+.slbl{font-size:12px;color:var(--text2);flex-shrink:0}
+#letter-modal{background:#fffdf8}
+.ltop{height:5px;border-radius:var(--r) var(--r) 0 0;background:linear-gradient(90deg,var(--pink),var(--purple),var(--pink));margin:-20px -20px 16px}
+.ltags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
+.ltag{padding:3px 11px;border-radius:13px;font-size:11px;background:var(--pink-l);color:var(--rose);border:1px solid rgba(195,145,170,.3)}
+.lsec{margin-bottom:11px}
+.lslbl{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.7px;margin-bottom:3px;text-transform:uppercase}
+.lsbdy{font-size:13px;color:var(--text2);line-height:1.8}
+.lnotice{font-size:12px;color:var(--text2);font-style:italic;padding:7px 10px;background:var(--pink-l);border-left:3px solid var(--pink);border-radius:0 7px 7px 0;margin-bottom:10px}
+.lmsg{background:#fff9f4;border:1px dashed var(--pink);border-radius:11px;padding:15px 17px;font-size:14px;color:var(--text);line-height:2;position:relative}
+.lmsg::before{content:'\275D';font-size:30px;color:rgba(195,145,170,.3);position:absolute;top:-5px;left:9px;line-height:1}
+.lftr{text-align:right;font-size:10px;color:var(--text3);font-style:italic;margin-top:9px}
+.lact{display:flex;gap:7px;justify-content:center;margin-top:13px}
+.ldg{text-align:center;padding:34px;color:var(--text3)}
+.sp{width:20px;height:20px;border:2px solid var(--pink-l);border-top-color:var(--pink);border-radius:50%;animation:spin .65s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(35,12,26,.88);backdrop-filter:blur(8px);color:#fff;padding:6px 18px;border-radius:18px;font-size:12px;z-index:9999;pointer-events:none;opacity:0;transition:opacity .22s;white-space:nowrap}
+#toast.show{opacity:1}
+@media(max-width:860px){
+  #ws{grid-template-columns:1fr}
+  #pSched{display:none}
+  #pSched.mob-show{display:flex;position:fixed;inset:50px 0 0 0;z-index:200;overflow-y:auto;background:var(--bg)}
+  #sidebar{display:none}
+  #sidebar.mob-show{display:flex;position:fixed;top:50px;right:0;bottom:0;width:80vw;z-index:200;overflow-y:auto}
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<header id="topbar">
+  <div class="logo">✦ CompanionTime</div>
+  <nav class="nav-tabs">
+    <button class="nav-tab act" data-tab="chat" onclick="showTab('chat')">💬 Chat</button>
+    <button class="nav-tab" data-tab="sched" onclick="showTab('sched')">📅 Schedule</button>
+  </nav>
+  <div class="tb-right">
+    <button class="btn btn-p" style="font-size:12px;padding:5px 12px" onclick="openLetter()">✨ Their View of Me</button>
+    <div class="tb-icon" onclick="openSettings()" title="Settings">⚙️</div>
+  </div>
+</header>
+
+<div id="ws">
+
+  <!-- LEFT: Mini schedule (Chat tab) -->
+  <div id="left-sched">
+    <div style="padding:8px 10px 5px;font-size:11px;font-weight:600;color:var(--text2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--border)">
+      <span>📅 This Week</span>
+      <button class="btn btn-g" style="font-size:9px;padding:2px 7px" onclick="showTab('sched')">Full ↗</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 5px 8px;min-height:0">
+      <div class="wk-hd" id="wk-hd"></div>
+      <div class="tgrid" id="tgrid"></div>
+    </div>
+  </div>
+
+  <!-- CENTER: Chat / Schedule full / Letter -->
+  <div id="ct-main">
+
+    <!-- CHAT -->
+    <div id="pChat">
+      <div id="mem-bar">
+        <span id="mem-bar-txt" style="flex:1"></span>
+        <button class="btn btn-p" style="font-size:11px;padding:3px 10px" onclick="doMemConfirm()">Remember 💕</button>
+        <button class="btn btn-g" style="font-size:11px;padding:3px 10px" onclick="hideMemBar()">Ignore</button>
+      </div>
+      <div id="chat-msgs"></div>
+      <div id="no-key-banner" style="display:none;padding:8px 14px;background:linear-gradient(90deg,#fff0f5,#ede8f8);border-top:1px solid var(--border);font-size:12px;color:var(--text2);flex-shrink:0;text-align:center">
+        ⚙️ No API Key yet — <span onclick="openSettings()" style="color:var(--rose);cursor:pointer;text-decoration:underline">click here to set one up</span>
+      </div>
+      <div id="chat-inp-row">
+        <textarea id="chat-inp" placeholder="Talk to them…" rows="1" onkeydown="ckd(event)" oninput="aResize(this)"></textarea>
+        <button id="send-btn" onclick="doSend()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- SCHEDULE FULL -->
+    <div id="pSched">
+      <div class="p-hdr"><span>📅 Weekly Schedule</span><button class="btn btn-g" style="font-size:11px;padding:3px 10px" onclick="buildSched('wk-hd-full','tgrid-full')">Today</button></div>
+      <div class="sched-scroll">
+        <div class="wk-hd" id="wk-hd-full"></div>
+        <div class="tgrid" id="tgrid-full"></div>
+      </div>
+    </div>
+
+    <!-- LETTER -->
+    <div id="pLetter">
+      <div id="letter-body" style="width:100%;max-width:500px"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
+        <button class="btn btn-p" onclick="genLetter()">🔄 Refresh</button>
+        <button class="btn btn-g" onclick="dislikeLetter()">👎 Not this</button>
+      </div>
+      <div style="width:100%;max-width:500px;text-align:right;font-size:10px;color:var(--text3);font-style:italic;margin-top:4px">From every conversation we've shared</div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sc">
+      <div class="sc-ttl"><span>🎭 Character</span></div>
+      <div class="av-blk">
+        <img id="av-img" src="" alt="avatar">
+        <input type="file" id="av-file" accept="image/*" onchange="uploadAv(event)">
+        <div class="av-btns">
+          <button class="av-btn" onclick="document.getElementById('av-file').click()">📁 Upload</button>
+          <button class="av-btn" onclick="matchAv()">🎭 Match</button>
+          <button class="av-btn" onclick="openAiAv()">✨ AI Gen</button>
+        </div>
+      </div>
+      <div class="fr" style="margin-top:9px"><label class="fl">Character Name</label><input type="text" id="cn" placeholder="Gojo Satoru" oninput="saveChar()"></div>
+      <div class="fr"><label class="fl">Description (optional)</label><textarea id="cd" placeholder="The strongest sorcerer, confident and playful…" oninput="saveChar()"></textarea></div>
+    </div>
+    <div class="sc">
+      <div class="sc-ttl"><span>🎀 Rules</span><button class="btn btn-g" style="font-size:10px;padding:2px 8px" onclick="openAddRule()">+ Add</button></div>
+      <div id="rule-list"></div>
+    </div>
+    <div class="sc">
+      <div class="sc-ttl"><span>💾 Memories</span><button class="btn btn-g" style="font-size:10px;padding:2px 8px" onclick="openAddMem()">+ Add</button></div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:3px">🍰 About You</div>
+      <div id="mem-fact"></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:7px;margin-bottom:3px">💕 About Us</div>
+      <div id="mem-story"></div>
+    </div>
+    <div class="sc">
+      <div class="sc-ttl"><span>🔍 Observations</span><label class="tog"><input type="checkbox" id="obs-tog" checked onchange="G.settings.obsVoice=this.checked;save()"><span class="ts"></span></label></div>
+      <div id="obs-list"></div>
+      <button class="btn btn-g btn-w" style="margin-top:7px" onclick="genObs()">✦ Generate</button>
+    </div>
+    <div class="sc">
+      <div class="sc-ttl"><span>🌸 Context</span><button class="btn btn-g" style="font-size:10px;padding:2px 8px" onclick="G.ctx=[];save();renderCtx()">Clear</button></div>
+      <div id="ctx-list"></div>
+    </div>
+    <div class="sc">
+      <div class="sc-ttl"><span>📊 Stats</span></div>
+      <div id="stat-blk"></div>
+    </div>
+    <div class="sc">
+      <div class="sc-ttl"><span>⏰ Greetings</span></div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--text2)">Wake</span><input type="time" id="t-wake" value="08:00" onchange="G.settings.wakeTime=this.value;save()" style="width:85px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--text2)">Sleep</span><input type="time" id="t-sleep" value="23:00" onchange="G.settings.sleepTime=this.value;save()" style="width:85px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;color:var(--text2)">Enable</span><label class="tog"><input type="checkbox" id="greet-tog" checked onchange="G.settings.greetOn=this.checked;save()"><span class="ts"></span></label></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+
+<!-- Settings -->
+<div class="ov" id="ov-settings">
+  <div class="modal">
+    <h3>⚙️ Settings</h3>
+    <div class="fr">
+      <label class="fl">AI Provider</label>
+      <select id="s-provider" onchange="onProviderChange()">
+        <option value="claude">Claude (Anthropic)</option>
+        <option value="openai">OpenAI</option>
+        <option value="deepseek">DeepSeek</option>
+      </select>
+    </div>
+    <div class="fr">
+      <label class="fl">API Key <span id="s-key-hint" style="color:var(--text3);font-weight:400"></span></label>
+      <input type="password" id="s-apikey" placeholder="Paste your API Key here…">
+    </div>
+    <div class="srow">
+      <span class="slbl">Voice observations</span>
+      <label class="tog"><input type="checkbox" id="s-obs" checked onchange="G.settings.obsVoice=this.checked;document.getElementById('obs-tog').checked=this.checked;save()"><span class="ts"></span></label>
+    </div>
+    <div class="srow">
+      <span class="slbl">Wake time</span>
+      <input type="time" id="s-wake" value="08:00" style="width:100px">
+    </div>
+    <div class="srow">
+      <span class="slbl">Sleep time</span>
+      <input type="time" id="s-sleep" value="23:00" style="width:100px">
+    </div>
+    <div class="srow">
+      <span class="slbl">Enable greetings</span>
+      <label class="tog"><input type="checkbox" id="s-greet" checked><span class="ts"></span></label>
+    </div>
+    <div class="m-act">
+      <button class="btn btn-g" onclick="closeOv('ov-settings')">Close</button>
+      <button class="btn btn-p" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Letter / Their View of Me -->
+<div class="ov" id="ov-letter">
+  <div class="modal modal-w" id="letter-modal">
+    <div class="ltop"></div>
+    <div id="letter-body"></div>
+    <div class="lact">
+      <button class="btn btn-p" onclick="genLetter()">🔄 Refresh</button>
+      <button class="btn btn-g" onclick="dislikeLetter()">👎 Not this</button>
+      <button class="btn btn-g" onclick="closeOv('ov-letter')">Close</button>
+    </div>
+    <div class="lftr">From every conversation we've shared</div>
+  </div>
+</div>
+
+<!-- AI Avatar -->
+<div class="ov" id="ov-aiav">
+  <div class="modal">
+    <h3>✨ AI Generate Avatar</h3>
+    <div class="fr">
+      <label class="fl">Describe appearance features</label>
+      <input type="text" id="aiav-desc" placeholder="e.g. white hair, blindfold, blue eyes, anime style">
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin:-4px 0 9px">Uses OpenAI DALL-E — requires OpenAI Key in Settings</div>
+    <div class="fr">
+      <label class="fl">OpenAI API Key</label>
+      <input type="text" id="aiav-key" placeholder="sk-...">
+    </div>
+    <div class="m-act">
+      <button class="btn btn-g" onclick="closeOv('ov-aiav')">Cancel</button>
+      <button class="btn btn-p" onclick="doGenAv()">Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Rule -->
+<div class="ov" id="ov-rule">
+  <div class="modal">
+    <h3>🎀 Add Training Rule</h3>
+    <div class="fr">
+      <label class="fl">Rule (e.g. "call me sweetheart", "don't mention work")</label>
+      <input type="text" id="rule-inp" placeholder="Enter rule…">
+    </div>
+    <div class="m-act">
+      <button class="btn btn-g" onclick="closeOv('ov-rule')">Cancel</button>
+      <button class="btn btn-p" onclick="saveRule()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Memory -->
+<div class="ov" id="ov-mem">
+  <div class="modal">
+    <h3>💾 Add Memory</h3>
+    <div class="fr">
+      <label class="fl">Category</label>
+      <select id="mem-type">
+        <option value="user_fact">🍰 About You</option>
+        <option value="shared_story">💕 About Us</option>
+      </select>
+    </div>
+    <div class="fr">
+      <label class="fl">Content</label>
+      <textarea id="mem-inp" placeholder="Memory content…"></textarea>
+    </div>
+    <div class="m-act">
+      <button class="btn btn-g" onclick="closeOv('ov-mem')">Cancel</button>
+      <button class="btn btn-p" onclick="saveMem()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Memory -->
+<div class="ov" id="ov-memedit">
+  <div class="modal">
+    <h3>✏️ Edit Memory</h3>
+    <div class="fr">
+      <label class="fl">Content</label>
+      <textarea id="memedit-inp" style="min-height:64px"></textarea>
+    </div>
+    <div class="m-act">
+      <button class="btn btn-g" onclick="closeOv('ov-memedit')">Cancel</button>
+      <button class="btn btn-p" onclick="saveMemEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="ov" id="ov-task">
+  <div class="modal">
+    <h3 id="task-ttl">Add Task</h3>
+    <div class="fr">
+      <label class="fl">Task name</label>
+      <input type="text" id="task-name" placeholder="Event content">
+    </div>
+    <div class="fr">
+      <label class="fl">Type</label>
+      <select id="task-type">
+        <option value="work">💼 Work</option>
+        <option value="study">📚 Study</option>
+        <option value="social">👥 Social</option>
+        <option value="fun">🎮 Fun</option>
+        <option value="misc">🗓 Misc</option>
+        <option value="sport">🏃 Sport</option>
+      </select>
+    </div>
+    <div class="m-act">
+      <button class="btn btn-g" id="task-del-btn" style="display:none" onclick="delTask()">🗑️ Delete</button>
+      <button class="btn btn-g" onclick="closeOv('ov-task')">Cancel</button>
+      <button class="btn btn-p" onclick="saveTask()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// DEFAULT AVATAR & AVATAR MAP
+// ============================================================
+const DAV = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23f8d3e8'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='28' dy='.1em'%3E%F0%9F%8C%9F%3C/text%3E%3C/svg%3E";
+
+const AMAP = {
+  'gojo satoru':     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23c5dff0'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E",
+  'levi ackerman':   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23d8d8d8'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E",
+  'osamu dazai':     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23e4d0dc'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%8C%B9%3C/text%3E%3C/svg%3E",
+  'rei ayanami':     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23d0dff0'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%A4%8D%3C/text%3E%3C/svg%3E",
+  'rem':             "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23b0c5e8'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%8C%B8%3C/text%3E%3C/svg%3E",
+  'ken kaneki':      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23282828'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E",
+  'takashi natsume': "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23f0e4c0'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%90%B1%3C/text%3E%3C/svg%3E",
+  'kaede rukawa':    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23f5d080'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%8F%80%3C/text%3E%3C/svg%3E",
+  'lin daiyu':       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23e8d0f0'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%8C%B8%3C/text%3E%3C/svg%3E",
+  'victor li':       "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23e0d4c0'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='26' dy='.1em'%3E%F0%9F%92%BC%3C/text%3E%3C/svg%3E",
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let G = {
+  char: { name:'Gojo Satoru', desc:'The strongest sorcerer, confident and playful' },
+  avatar: null,
+  rules: [],
+  mems: [],
+  ctx: [],
+  tasks: {},
+  hist: [],
+  insights: [],
+  greeted: { morning:null, night:null },
+  settings: { wakeTime:'08:00', sleepTime:'23:00', greetOn:true, obsVoice:true, provider:'claude', apiKeys:{claude:'',openai:'',deepseek:''} },
+  letterDislikes: 0,
+  _pendingMem: null,
+  _editMemId: null,
+  _taskKey: null,
+};
+
+// ============================================================
+// STORAGE
+// ============================================================
+function save() {
+  try {
+    if (G.avatar) localStorage.setItem('ct_av', G.avatar);
+    const s = {...G, avatar:null};
+    s.hist = s.hist.slice(-40);
+    localStorage.setItem('ct_state', JSON.stringify(s));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    const r = localStorage.getItem('ct_state');
+    if (r) { const d=JSON.parse(r); Object.keys(d).forEach(k=>{ if(k!=='avatar') G[k]=d[k]; }); }
+    const av = localStorage.getItem('ct_av');
+    if (av) G.avatar = av;
+  } catch(e) {}
+}
+
+// ============================================================
+// AI PROVIDER (Claude / OpenAI / DeepSeek — key set in ⚙️ Settings)
+// ============================================================
+async function callProvider(system, messages, maxTokens=500) {
+  const provider = G.settings.provider || 'claude';
+  const key = (G.settings.apiKeys || {})[provider];
+  if (!key) throw new Error('NO_KEY');
+
+  if (provider === 'claude') {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: "claude-opus-5",
+        max_tokens: maxTokens,
+        system: system,
+        messages: messages,
+      })
+    });
+    if (!resp.ok) {
+      const e = await resp.json().catch(()=>({}));
+      throw new Error(e.error?.message || resp.status);
+    }
+    const d = await resp.json();
+    return d.content?.[0]?.text || '';
+  }
+
+  // OpenAI / DeepSeek — OpenAI-compatible chat completions
+  const cfg = provider === 'deepseek'
+    ? { url: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat' }
+    : { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
+  const resp = await fetch(cfg.url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+    body: JSON.stringify({
+      model: cfg.model,
+      max_tokens: maxTokens,
+      messages: [{ role: 'system', content: system }, ...messages],
+    })
+  });
+  if (!resp.ok) {
+    const e = await resp.json().catch(()=>({}));
+    throw new Error(e.error?.message || resp.status);
+  }
+  const d = await resp.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
+// ============================================================
+// SYSTEM PROMPT (all in English)
+// ============================================================
+function buildSys(extra) {
+  let s = `You are ${G.char.name}. `;
+  if (G.char.desc) s += `${G.char.desc}. `;
+  s += `Stay completely in character — respond using the personality, speech patterns, and mannerisms of this character. If you're unsure how they speak, infer from the name and any description. Respond in English naturally.\n\n`;
+
+  if (G.rules.length) {
+    s += `The user has trained you with these rules: ${G.rules.map(r=>r.value).join(', ')}. Follow these strictly.\n\n`;
+  }
+
+  const vc = G.ctx.filter(m=>Date.now()-m.ts < 7*864e5).slice(-5);
+  if (vc.length) {
+    s += `Recent user context (fades over time, don't over-rely): ${vc.map(m=>m.sum).join('; ')}.\n\n`;
+  }
+
+  const facts = G.mems.filter(m=>m.type==='user_fact').map(m=>m.content).join('; ');
+  const stories = G.mems.filter(m=>m.type==='shared_story').map(m=>m.content).join('; ');
+  if (facts) s += `Facts about the user: ${facts}.\n`;
+  if (stories) s += `Things between you two: ${stories}.\n`;
+  if (facts||stories) s += '\n';
+
+  // L5 behavior hints
+  const um = G.hist.filter(m=>m.role==='user').map(m=>m.content).join(' ').toLowerCase();
+  const hints = [];
+  if (/diet|salad|workout|gym|running/.test(um)) hints.push("User may be dieting or working out — avoid mentioning junk food and late-night eating");
+  if (/sorry|i always|can't say no|my fault/.test(um)) hints.push("User may be a people-pleaser — gently remind them it's okay to say no");
+  if (/stay up|can't sleep|3am|all night/.test(um)) hints.push("User may be sleep-deprived — show care about their rest");
+  if (hints.length) s += `Reply strategy hints: ${hints.join('; ')}.\n\n`;
+
+  // Today schedule context
+  const td = getTodayTasks();
+  if (td.length) s += `Today's schedule: ${td.map(t=>t.name).join(', ')}.\n\n`;
+
+  if (extra) s += extra + '\n\n';
+
+  s += `Reply using JSON format (required). Output raw JSON only, no markdown code blocks:
+{"reply":"your in-character response","state_update":{"userMood":"mood word","recentTopics":["topic"],"energyLevel":"high/mid/low"},"scheduleAdd":null or {"day":"Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday","hour":number,"name":"task name","type":"work/study/social/fun/misc/sport"},"isTraining":true or false}
+Set isTraining to true if the user is giving you instructions about how to behave (e.g. "call me", "from now on", "don't", "always"). scheduleAdd: only fill if user mentions adding a task to the schedule.`;
+  return s;
+}
+
+// ============================================================
+// CHAT
+// ============================================================
+const MEM_KW = ['i like','i love','i hate','i am','i live in','i study','i grew up','i was born','we once','remember when','my hobby','i have'];
+const OBS_KW = ['what do you think about me lately','have you noticed anything','do you observe me'];
+const RULE_KW = ['call me','from now on','always','never','stop saying','more often'];
+
+function ckd(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSend();} }
+function aResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+
+async function doSend() {
+  const inp = document.getElementById('chat-inp');
+  const txt = inp.value.trim(); if (!txt) return;
+  inp.value = ''; inp.style.height = 'auto';
+
+  appendMsg('u', txt);
+  G.hist.push({role:'user', content:txt});
+
+  // Memory trigger
+  const low = txt.toLowerCase();
+  for (const k of MEM_KW) {
+    if (low.includes(k)) {
+      const i = low.indexOf(k);
+      const snip = txt.slice(i, i+50);
+      G._pendingMem = {content:snip, raw:txt};
+      document.getElementById('mem-bar-txt').textContent = `Remember "${snip}"?`;
+      document.getElementById('mem-bar').classList.add('show');
+      break;
+    }
+  }
+
+  const wantsObs = OBS_KW.some(k=>low.includes(k));
+  await callAI(wantsObs);
+}
+
+async function callAI(wantsObs=false) {
+  if (!G.hist.length) return;
+  const tid = appendTyping();
+  const extra = wantsObs ? "The user is asking for your observations about them lately. Naturally weave in 1-2 gentle observations starting with 'I've noticed' or 'It seems like' — be caring, never label." : null;
+  const sys = buildSys(extra);
+  const msgs = G.hist.slice(-16).map(m=>({role: m.role==='assistant'?'assistant':'user', content:m.content}));
+
+  try {
+    const raw = await callProvider(sys, msgs);
+    removeTyping(tid);
+    let reply=raw, su=null, sa=null, isTrain=false;
+    try {
+      let js=null;
+      const fc=raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if(fc){js=fc[1].trim();}
+      else{const s=raw.indexOf('{');if(s!==-1){let d=0,ei=-1;for(let i=s;i<raw.length;i++){if(raw[i]==='{')d++;else if(raw[i]==='}'){d--;if(d===0){ei=i;break;}}}if(ei!==-1)js=raw.slice(s,ei+1);}}
+      if(js){const p=JSON.parse(js);reply=p.reply||raw;su=p.state_update||null;sa=p.scheduleAdd||null;isTrain=!!p.isTraining;}
+    } catch(e){
+      const rm=raw.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      if(rm){try{reply=JSON.parse('"'+rm[1]+'"');}catch(e2){reply=rm[1];}}
+    }
+
+    if (sa) applySchedAdd(sa);
+    if (isTrain) autoAddRule(G.hist.filter(m=>m.role==='user').slice(-1)[0]?.content||'');
+
+    appendMsg('a', reply);
+    G.hist.push({role:'assistant', content:reply});
+
+    if (su) {
+      const sum=[su.userMood,...(su.recentTopics||[])].filter(Boolean).join(', ');
+      if(sum){
+        G.ctx.push({ts:Date.now(),sum});
+        G.ctx=G.ctx.filter(m=>Date.now()-m.ts<7*864e5).slice(-10);
+        renderCtx();
+      }
+    }
+
+    // Auto-gen observation every 8 user messages
+    const uc=G.hist.filter(m=>m.role==='user').length;
+    if(uc>0&&uc%8===0) setTimeout(genObs,600);
+
+    renderStats(); save();
+  } catch(e) {
+    removeTyping(tid);
+    const em2=e.message||'';
+    if(em2==='NO_KEY'){appendMsg('a','Please set an API Key in ⚙️ Settings to start chatting!');openSettings();}
+    else if(/insufficient balance|quota|402/i.test(em2))appendMsg('a',"Your API account is out of credits 💳 — please top up, or switch to DeepSeek in ⚙️ Settings.");
+    else if(/invalid|unauthorized|401/i.test(em2))appendMsg('a','Your API Key seems invalid 🔑 — please check it in ⚙️ Settings.');
+    else if(/fetch|network|failed to fetch/i.test(em2))appendMsg('a','Network error 📡 — please check your connection and try again.');
+    else appendMsg('a',`Something went wrong: ${em2}`);
+  }
+}
+
+function autoAddRule(txt) {
+  const low = txt.toLowerCase();
+  let val = txt.slice(0,50);
+  const nk = low.match(/call me[:\s]+?["']?([a-z0-9 ]+)["']?/i);
+  if (nk) val = `Call the user "${nk[1]}"`;
+  const avoid = low.match(/don't (?:mention|talk about|say)[:\s]+?["']?([a-z0-9 ]+)["']?/i);
+  if (avoid) val = `Don't mention "${avoid[1]}"`;
+  if (!G.rules.find(r=>r.value===val)) {
+    G.rules.push({id:Date.now(), value:val});
+    renderRules(); toast(`Rule saved: ${val}`);
+  }
+}
+
+function applySchedAdd(info) {
+  const DM={Monday:0,Tuesday:1,Wednesday:2,Thursday:3,Friday:4,Saturday:5,Sunday:6};
+  const off=DM[info.day]; if(off===undefined) return;
+  const ws=weekStart();
+  const dt=new Date(ws); dt.setDate(dt.getDate()+off);
+  const k=`${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())}_${p2(parseInt(info.hour)||9)}`;
+  G.tasks[k]={name:info.name, type:info.type||'misc'};
+  save(); buildSched(); toast(`Added to schedule: ${info.name}`);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function appendMsg(role, content) {
+  const c=document.getElementById('chat-msgs');
+  const d=document.createElement('div'); d.className=`msg ${role}`;
+  const t=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const avSrc=G.avatar||AMAP[G.char.name.toLowerCase()]||DAV;
+  const uavSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='14' fill='%23f8d3e8'/%3E%3Ctext x='50%25' y='62%25' text-anchor='middle' font-size='14' dy='.1em'%3E%F0%9F%8C%B8%3C/text%3E%3C/svg%3E";
+  if(role==='s') d.innerHTML=`<div class="mb">${esc(content)}</div>`;
+  else if(role==='u') d.innerHTML=`<div><div class="mb">${esc(content)}</div><div class="mt">${t}</div></div><img class="mav" src="${uavSrc}">`;
+  else d.innerHTML=`<img class="mav" src="${avSrc}"><div><div class="mb">${esc(content)}</div><div class="mt">${t}</div></div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+
+function appendTyping() {
+  const c=document.getElementById('chat-msgs');
+  const id='tp'+Date.now();
+  const d=document.createElement('div'); d.className='msg a'; d.id=id;
+  const av=G.avatar||AMAP[G.char.name.toLowerCase()]||DAV;
+  d.innerHTML=`<img class="mav" src="${av}"><div class="mb"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight; return id;
+}
+function removeTyping(id){const e=document.getElementById(id);if(e)e.remove();}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+function renderRules(){
+  const el=document.getElementById('rule-list');
+  if(!G.rules.length){el.innerHTML='<div style="color:var(--text3);font-size:10px">No rules yet</div>';return;}
+  el.innerHTML=G.rules.map((r,i)=>`<div class="li"><span class="lc">${esc(r.value)}</span><span class="ld" onclick="delRule(${i})">🗑️</span></div>`).join('');
+}
+function delRule(i){G.rules.splice(i,1);save();renderRules();}
+function openAddRule(){openOv('ov-rule');document.getElementById('rule-inp').value='';}
+function saveRule(){
+  const v=document.getElementById('rule-inp').value.trim();if(!v)return;
+  G.rules.push({id:Date.now(),value:v});
+  save();renderRules();closeOv('ov-rule');toast('Rule added');
+}
+
+function renderMems(){
+  const rl=(items,id)=>{
+    const el=document.getElementById(id);
+    if(!items.length){el.innerHTML='<div style="color:var(--text3);font-size:10px">None yet</div>';return;}
+    el.innerHTML=items.map(m=>`<div class="li"><span class="lc">${esc(m.content)}</span><span class="le" onclick="editMem('${m.id}')">✏️</span><span class="ld" onclick="delMem('${m.id}')">🗑️</span></div>`).join('');
+  };
+  rl(G.mems.filter(m=>m.type==='user_fact'),'mem-fact');
+  rl(G.mems.filter(m=>m.type==='shared_story'),'mem-story');
+}
+function delMem(id){G.mems=G.mems.filter(m=>m.id!=id);save();renderMems();}
+function editMem(id){const m=G.mems.find(m=>m.id==id);if(!m)return;G._editMemId=id;document.getElementById('memedit-inp').value=m.content;openOv('ov-memedit');}
+function saveMemEdit(){const m=G.mems.find(m=>m.id==G._editMemId);const v=document.getElementById('memedit-inp').value.trim();if(m&&v){m.content=v;save();renderMems();}closeOv('ov-memedit');}
+function openAddMem(){openOv('ov-mem');document.getElementById('mem-inp').value='';}
+function saveMem(){
+  const c=document.getElementById('mem-inp').value.trim();if(!c)return;
+  G.mems.push({id:Date.now(),type:document.getElementById('mem-type').value,content:c,createdAt:new Date().toISOString()});
+  save();renderMems();closeOv('ov-mem');toast('Memory saved 💕');
+}
+
+function renderCtx(){
+  const el=document.getElementById('ctx-list');
+  const v=G.ctx.filter(m=>Date.now()-m.ts<7*864e5).slice(-5);
+  if(!v.length){el.innerHTML='<div style="color:var(--text3);font-size:10px">None yet</div>';return;}
+  el.innerHTML=v.map(m=>{
+    const d=new Date(m.ts);
+    const ts=d.toLocaleDateString('en-US',{month:'numeric',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    return `<div style="padding:4px 7px;border-radius:6px;background:var(--pink-l);font-size:10px;margin-top:3px;color:var(--text2)"><div style="color:var(--text3)">${ts}</div><div>${esc(m.sum)}</div></div>`;
+  }).join('');
+}
+
+function renderObs(){
+  const el=document.getElementById('obs-list');
+  if(!G.insights.length){el.innerHTML='<div style="color:var(--text3);font-size:10px">Chat more to generate…</div>';return;}
+  el.innerHTML=G.insights.slice(-3).reverse().map(ins=>`<div class="obs-li"><span class="lc">${esc(ins.content)}</span><span class="ld" onclick="delObs('${ins.id}')">🗑️</span></div>`).join('');
+}
+function delObs(id){G.insights=G.insights.filter(x=>x.id!=id);save();renderObs();}
+
+function renderStats(){
+  const el=document.getElementById('stat-blk');
+  const um=G.hist.filter(m=>m.role==='user');
+  const allTxt=um.map(m=>m.content).join(' ').toLowerCase();
+  const ew=['tired','stressed','happy','anxious','lonely','excited','sad','overwhelmed'].filter(w=>allTxt.includes(w)).slice(0,4);
+  el.innerHTML=`
+    <div class="stat-row"><span class="sk">Messages sent</span><span>${um.length}</span></div>
+    <div class="stat-row"><span class="sk">Mood words</span><span>${ew.join(', ')||'—'}</span></div>
+    <div class="stat-row"><span class="sk">Schedule tasks</span><span>${Object.keys(G.tasks).length}</span></div>
+    <div class="stat-row"><span class="sk">Training rules</span><span>${G.rules.length}</span></div>`;
+}
+
+// ============================================================
+// OBSERVATIONS L5
+// ============================================================
+async function genObs(){
+  const um=G.hist.filter(m=>m.role==='user').map(m=>m.content).join(' ').toLowerCase();
+  const emo=['tired','stressed','lonely','anxious','happy','excited','sorry','can\'t say no'].filter(w=>um.includes(w)).join(', ');
+  const kw=['diet','gym','workout','staying up','all-nighter'].filter(w=>um.includes(w)).join(', ');
+  const ctx=G.ctx.slice(-4).map(m=>m.sum).join('; ');
+  const sys=`You are ${G.char.name}. You are caring and perceptive.`;
+  const prompt=`Based on the user's recent activity — emotional words: "${emo||'none'}", keywords: "${kw||'none'}", recent state: "${ctx||'none'}" — write 1-2 gentle observations starting with "I've noticed" or "It seems like". Never use labels or clinical terms. If no clear pattern, output just: null`;
+  try {
+    const raw=await callProvider(sys,[{role:'user',content:prompt}],150);
+    if(!raw||raw.trim().toLowerCase()==='null')return;
+    G.insights.push({id:Date.now(),content:raw.trim()});
+    G.insights=G.insights.slice(-4);save();renderObs();
+  }catch(e){}
+}
+
+// ============================================================
+// LETTER (Their View of Me) L6
+// ============================================================
+async function openLetter(){openOv('ov-letter');genLetter();}
+
+async function genLetter(){
+  const el=document.getElementById('letter-body');
+  el.innerHTML=`<div class="ldg"><div class="sp" style="margin:0 auto 9px"></div><div>Thinking about you…</div></div>`;
+  const facts=G.mems.filter(m=>m.type==='user_fact').map(m=>m.content).join('; ')||'none';
+  const stories=G.mems.filter(m=>m.type==='shared_story').map(m=>m.content).join('; ')||'none';
+  const obs=G.insights.slice(-2).map(i=>i.content).join('; ')||'none';
+  const ctx=G.ctx.slice(-3).map(m=>m.sum).join('; ')||'none';
+  const sys=`You are ${G.char.name}. ${G.char.desc||''}. Generate "Their View of Me" from the character's perspective. Output ONLY valid JSON, no extra text, no markdown:
+{"impressionTags":["2-4 short tags"],"personalityNote":"1-2 sentences describing the user's personality from your perspective","relationshipNote":"1-2 sentences about your relationship","recentNotice":"one thing you recently noticed about them","messageToUser":"1-2 warm sentences you want to say to them"}`;
+  const prompt=`About the user: ${facts}\nAbout us: ${stories}\nRecent state: ${ctx}\nObservations: ${obs}\nTotal messages: ${G.hist.length}\n${G.letterDislikes>0?'The user did not like the previous version — try a different style and tone.':''}`;
+  try {
+    const raw=await callProvider(sys,[{role:'user',content:prompt}],500);
+    const m=raw.match(/\{[\s\S]*\}/);
+    const p=JSON.parse(m[0]);
+    el.innerHTML=`
+      <div class="ltop"></div>
+      <div class="ltags">${(p.impressionTags||[]).map(t=>`<span class="ltag">${esc(t)}</span>`).join('')}</div>
+      <div class="lsec"><div class="lslbl">Personality</div><div class="lsbdy">${esc(p.personalityNote||'')}</div></div>
+      <div class="lsec"><div class="lslbl">Our Relationship</div><div class="lsbdy">${esc(p.relationshipNote||'')}</div></div>
+      <div class="lnotice">✨ ${esc(p.recentNotice||'')}</div>
+      <div class="lslbl" style="margin-bottom:5px">Something I want to say to you</div>
+      <div class="lmsg">${esc(p.messageToUser||'')}</div>`;
+  }catch(e){
+    el.innerHTML=`<div style="padding:14px;font-size:13px;color:var(--text2)">Failed to generate — please try again</div>`;
+  }
+}
+function dislikeLetter(){G.letterDislikes++;save();toast('Noted — regenerating…');genLetter();}
+
+// ============================================================
+// MEMORY CONFIRM
+// ============================================================
+function doMemConfirm(){
+  if(!G._pendingMem)return;
+  const t=(G._pendingMem.raw.toLowerCase().includes('we ')||G._pendingMem.raw.toLowerCase().includes('us '))?'shared_story':'user_fact';
+  G.mems.push({id:Date.now(),type:t,content:G._pendingMem.content,createdAt:new Date().toISOString()});
+  G._pendingMem=null;hideMemBar();save();renderMems();toast('Remembered 💕');
+}
+function hideMemBar(){G._pendingMem=null;document.getElementById('mem-bar').classList.remove('show');}
+
+// ============================================================
+// AVATAR
+// ============================================================
+function uploadAv(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{G.avatar=ev.target.result;document.getElementById('av-img').src=G.avatar;save();};
+  r.readAsDataURL(f);
+}
+function matchAv(){
+  const name=G.char.name.toLowerCase();
+  const m=AMAP[name];
+  if(m){G.avatar=m;document.getElementById('av-img').src=m;save();toast(`Matched avatar for ${G.char.name} ✨`);}
+  else{document.getElementById('av-img').src=DAV;G.avatar=null;save();toast('No preset found — using default');}
+}
+function openAiAv(){openOv('ov-aiav');document.getElementById('aiav-desc').value='';}
+async function doGenAv(){
+  const desc=document.getElementById('aiav-desc').value.trim();
+  const key=document.getElementById('aiav-key').value.trim();
+  if(!desc){toast('Please describe the appearance');return;}
+  if(!key){toast('Please enter your OpenAI API Key');return;}
+  closeOv('ov-aiav');toast('Generating avatar, please wait…',9000);
+  try{
+    const res=await fetch('https://api.openai.com/v1/images/generations',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+      body:JSON.stringify({model:'dall-e-3',prompt:`Anime portrait, character with: ${desc}. Soft pastel, close-up face, no text, clean background.`,n:1,size:'1024x1024',response_format:'b64_json'})
+    });
+    const d=await res.json();
+    if(d.data?.[0]?.b64_json){G.avatar='data:image/png;base64,'+d.data[0].b64_json;document.getElementById('av-img').src=G.avatar;save();toast('Avatar generated ✨');}
+    else toast('Generation failed: '+(d.error?.message||'unknown error'));
+  }catch(e){toast('Failed: '+e.message);}
+}
+function saveChar(){
+  G.char.name=document.getElementById('cn').value.trim()||'Gojo Satoru';
+  G.char.desc=document.getElementById('cd').value.trim();
+  document.getElementById('av-img').src=G.avatar||AMAP[G.char.name.toLowerCase()]||DAV;
+  save();
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function openSettings(){
+  document.getElementById('s-obs').checked=G.settings.obsVoice;
+  document.getElementById('s-wake').value=G.settings.wakeTime;
+  document.getElementById('s-sleep').value=G.settings.sleepTime;
+  document.getElementById('s-greet').checked=G.settings.greetOn;
+  document.getElementById('s-provider').value=G.settings.provider||'claude';
+  onProviderChange();
+  openOv('ov-settings');
+}
+function onProviderChange(){
+  const p=document.getElementById('s-provider').value;
+  document.getElementById('s-apikey').value=(G.settings.apiKeys||{})[p]||'';
+  const hints={claude:'console.anthropic.com',openai:'platform.openai.com',deepseek:'platform.deepseek.com'};
+  document.getElementById('s-key-hint').textContent=`(get one at ${hints[p]})`;
+}
+function saveSettings(){
+  G.settings.obsVoice=document.getElementById('s-obs').checked;
+  G.settings.wakeTime=document.getElementById('s-wake').value;
+  G.settings.sleepTime=document.getElementById('s-sleep').value;
+  G.settings.greetOn=document.getElementById('s-greet').checked;
+  G.settings.provider=document.getElementById('s-provider').value;
+  if(!G.settings.apiKeys)G.settings.apiKeys={claude:'',openai:'',deepseek:''};
+  G.settings.apiKeys[G.settings.provider]=document.getElementById('s-apikey').value.trim();
+  document.getElementById('obs-tog').checked=G.settings.obsVoice;
+  document.getElementById('t-wake').value=G.settings.wakeTime;
+  document.getElementById('t-sleep').value=G.settings.sleepTime;
+  document.getElementById('greet-tog').checked=G.settings.greetOn;
+  save();checkKeyBanner();toast('Settings saved');closeOv('ov-settings');
+}
+function checkKeyBanner(){
+  const provider=G.settings.provider||'claude';
+  const hasKey=!!((G.settings.apiKeys||{})[provider]);
+  const banner=document.getElementById('no-key-banner');
+  if(banner)banner.style.display=hasKey?'none':'block';
+}
+
+// ============================================================
+// SCHEDULE
+// ============================================================
+const WDAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const HOURS=Array.from({length:18},(_,i)=>i+6);
+function p2(n){return String(n).padStart(2,'0');}
+function weekStart(){
+  const n=new Date();const day=n.getDay();
+  const diff=day===0?-6:1-day;
+  const ws=new Date(n);ws.setDate(n.getDate()+diff);ws.setHours(0,0,0,0);return ws;
+}
+function tKey(date,hour){return `${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}_${p2(hour)}`;}
+function buildSched(hdId='wk-hd',tgId='tgrid'){
+  const now=new Date();const ws=weekStart();
+  const hd=document.getElementById(hdId);const tg=document.getElementById(tgId);
+  if(!hd||!tg)return;
+  let hh='<div></div>';
+  for(let d=0;d<7;d++){
+    const dt=new Date(ws);dt.setDate(ws.getDate()+d);
+    const isT=dt.toDateString()===now.toDateString();
+    const di=dt.getDay();
+    hh+=`<div class="wday${isT?' td':''}">${WDAYS[di]}<br><span style="font-size:9px">${dt.getMonth()+1}/${dt.getDate()}</span></div>`;
+  }
+  hd.innerHTML=hh;
+  let gh='';
+  for(const h of HOURS){
+    const label=h<12?`${h}am`:h===12?'12pm':`${h-12}pm`;
+    gh+=`<div class="tlbl">${label}</div>`;
+    for(let d=0;d<7;d++){
+      const dt=new Date(ws);dt.setDate(ws.getDate()+d);
+      const k=tKey(dt,h);const task=G.tasks[k];
+      const inner=task?`<div class="tblk t-${task.type}" onclick="openTask('${k}',event)">${esc(task.name)}</div>`:'';
+      gh+=`<div class="gcell" data-k="${k}" onclick="openTask('${k}',null)">${inner}</div>`;
+    }
+  }
+  tg.innerHTML=gh;
+}
+function openTask(k,e){if(e)e.stopPropagation();const t=G.tasks[k];G._taskKey=k;document.getElementById('task-ttl').textContent=t?'Edit Task':'Add Task';document.getElementById('task-name').value=t?t.name:'';document.getElementById('task-type').value=t?t.type:'work';document.getElementById('task-del-btn').style.display=t?'inline-flex':'none';openOv('ov-task');}
+function saveTask(){const n=document.getElementById('task-name').value.trim();if(!n){toast('Please enter a task name');return;}G.tasks[G._taskKey]={name:n,type:document.getElementById('task-type').value};save();buildSched();renderStats();closeOv('ov-task');}
+function delTask(){delete G.tasks[G._taskKey];save();buildSched();renderStats();closeOv('ov-task');}
+function getTodayTasks(){
+  const n=new Date();const pf=`${n.getFullYear()}-${p2(n.getMonth()+1)}-${p2(n.getDate())}_`;
+  return Object.entries(G.tasks).filter(([k])=>k.startsWith(pf)).map(([,v])=>v);
+}
+
+// ============================================================
+// GREETINGS
+// ============================================================
+function scheduleGreeting(){Notification.requestPermission().catch(()=>{});}
+function checkGreeting(){
+  if(!G.settings.greetOn)return;
+  const now=new Date();
+  const hm=`${p2(now.getHours())}:${p2(now.getMinutes())}`;
+  const today=now.toDateString();
+  const inRange=(cur,tgt)=>{const[ch,cm]=cur.split(':').map(Number);const[th,tm]=tgt.split(':').map(Number);return Math.abs((ch*60+cm)-(th*60+tm))<=60;};
+  if(G.greeted.morning&&new Date(G.greeted.morning).toDateString()!==today){G.greeted.morning=null;G.greeted.night=null;save();}
+  if(!G.greeted.morning&&inRange(hm,G.settings.wakeTime)){G.greeted.morning=new Date().toISOString();save();sendGreeting('morning');}
+  if(!G.greeted.night&&inRange(hm,G.settings.sleepTime)){G.greeted.night=new Date().toISOString();save();sendGreeting('night');}
+}
+async function sendGreeting(type){
+  const tasks=getTodayTasks();
+  const tn=tasks.length>=3?'you have a pretty full day':tasks.length<=1?'you have a light day today':'you have a moderate day ahead';
+  const prompt=type==='morning'?`It's morning and ${tn}. Say a short, warm good morning in character. JSON: {"reply":"...","state_update":{"userMood":"morning","recentTopics":[],"energyLevel":"mid"},"scheduleAdd":null,"isTraining":false}`:
+    `It's bedtime and ${tn}. Say a short, tender good night in character. JSON: {"reply":"...","state_update":{"userMood":"sleepy","recentTopics":[],"energyLevel":"low"},"scheduleAdd":null,"isTraining":false}`;
+  const raw=await callProvider(buildSys(),[{role:'user',content:prompt}],200).catch(()=>null);
+  if(!raw)return;
+  let reply=raw;
+  try{const m=raw.match(/\{[\s\S]*\}/);if(m)reply=JSON.parse(m[0]).reply||raw;}catch(e){}
+  appendMsg('s',`— ${type==='morning'?'Good Morning':'Good Night'} —`);
+  appendMsg('a',reply);
+  G.hist.push({role:'assistant',content:reply});save();
+  if(Notification.permission==='granted')new Notification(type==='morning'?'Good Morning':'Good Night',{body:`${G.char.name}: ${reply.slice(0,40)}`});
+}
+
+// ============================================================
+// TABS / MODALS
+// ============================================================
+function showTab(tab){
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.toggle('act',el.dataset.tab===tab));
+  const ws=document.getElementById('ws');
+  const ls=document.getElementById('left-sched');
+  const sb=document.getElementById('sidebar');
+  const pc=document.getElementById('pChat');
+  const ps=document.getElementById('pSched');
+  const pl=document.getElementById('pLetter');
+  [pc,ps,pl].forEach(el=>{if(el)el.style.display='none';});
+  if(tab==='chat'){
+    ws.style.gridTemplateColumns='260px 1fr 240px';
+    if(ls)ls.style.display='flex'; if(sb)sb.style.display='flex';
+    if(pc)pc.style.display='flex';
+    buildSched('wk-hd','tgrid');
+  } else if(tab==='sched'){
+    ws.style.gridTemplateColumns='1fr';
+    if(ls)ls.style.display='none'; if(sb)sb.style.display='none';
+    if(ps)ps.style.display='flex';
+    buildSched('wk-hd-full','tgrid-full');
+  } else if(tab==='letter'){
+    ws.style.gridTemplateColumns='1fr 240px';
+    if(ls)ls.style.display='none'; if(sb)sb.style.display='flex';
+    if(pl)pl.style.display='flex';
+    genLetter();
+  }
+}
+function openOv(id){document.getElementById(id).classList.add('open');}
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
+
+// ============================================================
+// TOAST
+// ============================================================
+let _tt;
+function toast(msg,dur=2400){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),dur);}
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  load();
+  // Seed on first run
+  if(!G._seeded){
+    G._seeded=true;
+    G.rules=[{id:1,value:'Call the user "sweetheart"'}];
+    G.mems=[{id:2,type:'user_fact',content:'I love strawberry cake',createdAt:new Date().toISOString()}];
+    const ws=weekStart();
+    function tk(d,h){const dt=new Date(ws);dt.setDate(dt.getDate()+d);return `${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())}_${p2(h)}`;}
+    G.tasks[tk(0,9)]={name:'Write weekly report',type:'work'};
+    G.tasks[tk(1,14)]={name:'Team meeting',type:'work'};
+    G.tasks[tk(2,19)]={name:'Evening run',type:'sport'};
+    G.hist=[
+      {role:'assistant',content:"Hey, you're finally here~ How have you been lately?"},
+      {role:'user',content:"Pretty good, just a little tired"},
+      {role:'assistant',content:"Hearing that makes me want to look after you. Is there something on your mind you'd like to share?"},
+    ];
+    save();
+  }
+  document.getElementById('cn').value=G.char.name;
+  document.getElementById('cd').value=G.char.desc||'';
+  document.getElementById('av-img').src=G.avatar||AMAP[G.char.name.toLowerCase()]||DAV;
+  document.getElementById('t-wake').value=G.settings.wakeTime;
+  document.getElementById('t-sleep').value=G.settings.sleepTime;
+  document.getElementById('greet-tog').checked=G.settings.greetOn;
+  document.getElementById('obs-tog').checked=G.settings.obsVoice;
+  renderRules();renderMems();renderCtx();renderObs();renderStats();
+  // Render seeded chat
+  const c=document.getElementById('chat-msgs');c.innerHTML='';
+  G.hist.slice(-30).forEach(m=>appendMsg(m.role==='assistant'?'a':'u',m.content));
+  showTab('chat');scheduleGreeting();setInterval(checkGreeting,60000);
+  checkKeyBanner();
+}
+init();
+</script>
+</body>
+</html>
